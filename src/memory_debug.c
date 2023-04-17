@@ -1,4 +1,4 @@
-#ifdef MEM_DEBUG
+#if defined(MEM_DEBUG ) && defined(DEBUG_BUILD)
 #define _GNU_SOURCE
 #include <dlfcn.h>
 #include <stdint.h>
@@ -31,6 +31,16 @@ void * malloc(size_t size) {
 
     void * p = real_malloc(size);
     fprintf(stdout, "malloc(%zu) = %p\n", size, p);
+    return p;
+}
+
+void * realloc(void * pointer, size_t size) {
+    static void * (*real_realloc)(void *, size_t) = NULL;
+    if (!real_realloc) {
+        real_realloc = dlsym(RTLD_NEXT, "realloc");
+    }
+    void * p = real_realloc(pointer, size);
+    fprintf(stdout, "realloc(%p, %zu) = %p\n", pointer, size, p);
     return p;
 }
 
