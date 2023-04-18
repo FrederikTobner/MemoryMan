@@ -2,7 +2,12 @@
 
 #include <stdio.h>
 
+void foo() {
+    int * i = malloc(sizeof(int));
+}
+
 int main(int argc, char const * argv[]) {
-    printf("Hello World");
+    printf("Hello World\n");
+    foo();
     return 0;
 }

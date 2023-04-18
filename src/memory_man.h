@@ -3,18 +3,19 @@
 
 #if defined(MEM_DEBUG)
 #include <stddef.h>
+#define malloc(size) mm_malloc(size, __func__, __LINE__, __FILE__)
 extern void * calloc(size_t size, size_t nmeb);
 extern void free(void * pointer);
-extern void * malloc(size_t size);
+extern void * mm_malloc(size_t size, char const * caller, size_t lineNumber, char const * fileName);
 extern void * realloc(void * pointer, size_t size);
-extern void memory_man_init(void);
+extern void analyzer_init(void);
 
 int MemoryMan_Main(int argc, char ** argv);
 
 // Redefine main fuction
 #define main(...)                          \
     main(int argc, char ** argv) {         \
-        memory_man_init();                 \
+        analyzer_init();                   \
         return MemoryMan_Main(argc, argv); \
     }                                      \
     int MemoryMan_Main(int argc, char ** argv)

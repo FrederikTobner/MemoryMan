@@ -1,10 +1,11 @@
 set(MEMORY_MAN_SOURCES
-pointer_table.c
+analyzer.c
 memory_debug.c
-initialize.c
+pointer_table.c
 )
 
 set (MEMORY_MAN_HEADERS
+analyzer.h
 memory_man.h
 pointer_table.h
 table.h
