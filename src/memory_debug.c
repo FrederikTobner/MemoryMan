@@ -1,8 +1,10 @@
-#if defined(MEM_DEBUG ) && defined(DEBUG_BUILD)
+#if defined(MEM_DEBUG)
 #define _GNU_SOURCE
 #include <dlfcn.h>
 #include <stdint.h>
 #include <stdio.h>
+
+#include "pointer_table.h"
 
 void free(void * pointer) {
     static void (*real_free)(void *) = NULL;
@@ -13,10 +15,10 @@ void free(void * pointer) {
     real_free(pointer);
 }
 
-void * calloc(size_t size) {
+void * calloc(size_t size, size_t nmeb) {
     static void * (*real_calloc)(size_t) = NULL;
-    if (!real_malloc) {
-        real_malloc = dlsym(RTLD_NEXT, "calloc");
+    if (!real_calloc) {
+        real_calloc = dlsym(RTLD_NEXT, "calloc");
     }
     void * p = real_calloc(size);
     fprintf(stdout, "calloc(%zu) = %p\n", size, p);
@@ -28,9 +30,16 @@ void * malloc(size_t size) {
     if (!real_malloc) {
         real_malloc = dlsym(RTLD_NEXT, "malloc");
     }
-
     void * p = real_malloc(size);
-    fprintf(stdout, "malloc(%zu) = %p\n", size, p);
+    return p;
+}
+
+void * untraced_malloc(size_t size) {
+    static void * (*real_malloc)(size_t) = NULL;
+    if (!real_malloc) {
+        real_malloc = dlsym(RTLD_NEXT, "malloc");
+    }
+    void * p = real_malloc(size);
     return p;
 }
 

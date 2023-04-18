@@ -9,8 +9,8 @@ jobs:
       BUILD_TYPE: ${{matrix.buildtypes}}
     strategy:
       matrix:
-        operatingsystems: [windows-latest, ubuntu-latest, macos-latest] 
-        buildtypes: [Release]
+        operatingsystems: [ubuntu-latest, macos-latest] 
+        buildtypes: [Debug]
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3

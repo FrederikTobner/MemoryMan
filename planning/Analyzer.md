@@ -1,4 +1,4 @@
-# Debugger
+# Analyzer
 
 The memory debugger shall wrap malloc, calloc, realloc, and free. It shall provide a simple debugging interface for tracking memory allocations and leaks.
 Do accomplish this, the debugger shall provide the following functions:
