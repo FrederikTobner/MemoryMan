@@ -8,7 +8,6 @@ set (MEMORY_MAN_HEADERS
 analyzer.h
 memory_man.h
 pointer_table.h
-table.h
 untraced_memory.h
 )
 

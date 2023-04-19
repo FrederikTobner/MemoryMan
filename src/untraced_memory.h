@@ -5,4 +5,6 @@
 
 extern void * untraced_malloc(size_t size);
 
+extern void untraced_free(void * pointer);
+
 #endif

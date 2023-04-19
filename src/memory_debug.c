@@ -13,6 +13,15 @@ void free(void * pointer) {
         real_free = dlsym(RTLD_NEXT, "free");
     }
     real_free(pointer);
+    analyzer_remove_pointer(pointer);
+}
+
+void untraced_free(void * pointer) {
+    static void (*real_free)(void *) = NULL;
+    if (!real_free) {
+        real_free = dlsym(RTLD_NEXT, "free");
+    }
+    real_free(pointer);
 }
 
 void * calloc(size_t size, size_t nmeb) {
@@ -30,7 +39,7 @@ void * mm_malloc(size_t size, char const * caller, size_t lineNumber, char const
         real_malloc = dlsym(RTLD_NEXT, "malloc");
     }
     void * p = real_malloc(size);
-    analyzer_add_pointer(caller, p);
+    analyzer_add_pointer(p, caller, lineNumber, fileName);
     return p;
 }
 
