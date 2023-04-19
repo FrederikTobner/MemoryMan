@@ -4,7 +4,7 @@
 
 void foo() {
     int * i = malloc(sizeof(int));
-    free(i);
+    // free(i);
 }
 
 int main(int argc, char const * argv[]) {

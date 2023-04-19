@@ -3,7 +3,9 @@
 
 #if defined(MEM_DEBUG)
 #include <stddef.h>
-#define malloc(size) mm_malloc(size, __func__, __LINE__, __FILE__)
+#include <string.h>
+#define __PRETTY_FILE__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+#define malloc(size)    mm_malloc(size, __func__, __LINE__, __PRETTY_FILE__)
 extern void * calloc(size_t size, size_t nmeb);
 extern void free(void * pointer);
 extern void * mm_malloc(size_t size, char const * caller, size_t lineNumber, char const * fileName);
