@@ -1,6 +1,8 @@
-#include "memory_man.h"
-
 #include <stdio.h>
+#include <stdlib.h>
+
+// The memory man include need to come after the stdlib include
+#include "memory_man.h"
 
 void foo() {
     int * i1 = malloc(sizeof(int));

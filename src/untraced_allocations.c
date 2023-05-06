@@ -1,4 +1,4 @@
-#if defined(MEM_DEBUG)
+#if defined(MEM_TRACE) && !defined(NDEBUG)
 #define _GNU_SOURCE
 #include <dlfcn.h>
 
