@@ -3,8 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "pointer_table.h"
-#include "untraced_memory.h"
+#include "allocation_data_table.h"
+#include "untraced_allocations.h"
 
 static pointer_table_t * pointerTable = NULL;
 
@@ -40,7 +40,8 @@ void analyzer_add_pointer(void * pointer, char const * functionName, size_t line
 }
 
 void analyzer_remove_pointer(void * pointer) {
-    pointer_table_remove_entry(pointer_table_look_up_entry(pointer, pointerTable), pointerTable);
+
+    pointer_table_entry_t * entry = pointer_table_remove_entry(pointer, pointerTable);
 }
 
 #endif

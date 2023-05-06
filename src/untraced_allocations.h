@@ -3,8 +3,8 @@
 
 #include <stddef.h>
 
-extern void * untraced_malloc(size_t size);
+void * untraced_malloc(size_t size);
 
-extern void untraced_free(void * pointer);
+void untraced_free(void * pointer);
 
 #endif

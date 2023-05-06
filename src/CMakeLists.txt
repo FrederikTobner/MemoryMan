@@ -1,14 +1,15 @@
 set(MEMORY_MAN_SOURCES
+allocation_data_table.c
 analyzer.c
-memory_debug.c
-pointer_table.c
+traced_allocations.c
+untraced_allocations.c
 )
 
 set (MEMORY_MAN_HEADERS
+allocation_data_table.h
 analyzer.h
 memory_man.h
-pointer_table.h
-untraced_memory.h
+untraced_allocations.h
 )
 
 add_library(${PROJECT_NAME} STATIC ${MEMORY_MAN_SOURCES} ${MEMORY_MAN_HEADERS})
