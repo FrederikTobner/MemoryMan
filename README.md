@@ -1,7 +1,11 @@
-# MemoryMan
+# MemoryTracer
 
-MemoryMan is a simple memory management library for C.
+[![Build Tobot](https://github.com/jksevend/tobot-engine/actions/workflows/build.yaml/badge.svg)](https://github.com/jksevend/tobot-engine/actions/workflows/build.yaml)
 
-## Overview
+> **NOTE**: 🚧 Under active development. 🚧
 
-MemoryMan is a simple memory management library for C, for Unix-systems. It provides a simple tracer for finding memory leaks.
+MemoryTracer is a simple memory tracing library for C, for Unix-systems, that helps you finding memory-leaks within your application.
+
+| ⚠️ Warning                                                                       |
+|----------------------------------------------------------------------------------|
+| The library should never be included in the release versions of your application |

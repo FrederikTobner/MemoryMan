@@ -1,12 +1,16 @@
 set(MEMORY_MAN_SOURCES
+allocation_meta_data.c
 allocation_meta_data_table.c
+fnv1a.c
 memory_tracer.c
 traced_allocations.c
 untraced_allocations.c
 )
 
 set (MEMORY_MAN_HEADERS
+allocation_meta_data.h
 allocation_meta_data_table.h
+fnv1a.h
 memory_tracer.h
 memory_man.h
 untraced_allocations.h

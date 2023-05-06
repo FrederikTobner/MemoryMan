@@ -1,16 +1,12 @@
 #include "allocation_meta_data_table.h"
 
-#if defined(MEM_TRACE) && !defined(NDEBUG)
-
 #include <stdint.h>
 #include <stdlib.h>
 
+#include "fnv1a.h"
 #include "untraced_allocations.h"
 
-#define OFFSET_BASIS                   0x811c9dc5u
-#define PRIME                          0x01000193u
-
-#define TOMBSTONE                      (allocation_meta_data_table_entry_t *)(0xFFFFFFFFFFFFFFFFUL)
+#define TABLE_TOMBSTONE                (allocation_meta_data_table_entry_t *)(0xFFFFFFFFFFFFFFFFUL)
 
 #define POINTER_SIZE                   sizeof(void *)
 
@@ -23,9 +19,6 @@
 #define CHECKED_MALLOC_USING_TYPE(n, type) \
     (SIZE_CHECK_USING_TYPE((n), (type)) ? untraced_malloc((n) * sizeof(type)) : 0)
 
-/// The maximum length of the key of a hashtable entry
-#define MAX_KEY_LENGTH             (1024)
-
 /// The growth factor of a hashtable - we double the size of the table every time a growth is triggered
 #define GROWTH_FACTOR              (2)
 
@@ -35,27 +28,18 @@
 /// The initial size of a hashtables
 #define TABLE_INIT_SIZE            (8)
 
-static uint32_t fnv1a_hash_data(uint64_t data, size_t length) {
-    uint32_t hash = OFFSET_BASIS;
-    for (size_t i = 0; i < length; i++) {
-        hash ^= (data >> (8 * i)) & 0xff;
-        hash *= PRIME;
-    }
-    return hash;
-}
+static int allocation_meta_data_table_grow_table(allocation_meta_data_table_t *);
 
-static int pointer_table_grow_table(allocation_meta_data_table_t *);
-
-allocation_meta_data_table_t * pointer_table_new() {
+allocation_meta_data_table_t * allocation_meta_data_table_new() {
     allocation_meta_data_table_t * table = untraced_malloc(sizeof(allocation_meta_data_table_t));
     if (!table) {
         return NULL;
     }
-    pointer_table_init_table(table);
+    allocation_meta_data_table_init(table);
     return table;
 }
 
-allocation_meta_data_table_entry_t * pointer_table_entry_new(void * key, allocation_meta_data_t * data) {
+allocation_meta_data_table_entry_t * allocation_meta_data_table_entry_new(void * key, allocation_meta_data_t * data) {
     if (!key || !data) {
         return NULL;
     }
@@ -68,16 +52,24 @@ allocation_meta_data_table_entry_t * pointer_table_entry_new(void * key, allocat
     return entry;
 }
 
-void pointer_table_destory(allocation_meta_data_table_t ** table) {
+void allocation_meta_data_table_entry_destroy(allocation_meta_data_table_entry_t ** entry) {
+    if (entry && *entry) {
+        untraced_free((*entry)->data);
+        untraced_free(*entry);
+        *entry = NULL;
+    }
+}
+
+void allocation_meta_data_table_destory(allocation_meta_data_table_t ** table) {
     if (!table || !*table) {
         return;
     }
-    pointer_table_free_entries(*table);
+    allocation_meta_data_table_free_entries(*table);
     untraced_free(*table);
     *table = NULL;
 }
 
-int pointer_table_init_table(allocation_meta_data_table_t * table) {
+int allocation_meta_data_table_init(allocation_meta_data_table_t * table) {
     if (!table) {
         return -1;
     }
@@ -93,12 +85,12 @@ int pointer_table_init_table(allocation_meta_data_table_t * table) {
     return 0;
 }
 
-void pointer_table_free_entries(allocation_meta_data_table_t * table) {
+void allocation_meta_data_table_free_entries(allocation_meta_data_table_t * table) {
     if (!table || !table->entries) {
         return;
     }
     for (size_t i = 0; i < table->allocated; i++) {
-        if (!table->entries[i] || table->entries[i] == TOMBSTONE) {
+        if (!table->entries[i] || table->entries[i] == TABLE_TOMBSTONE) {
             break;
         }
         if (table->entries[i]->data) {
@@ -110,12 +102,13 @@ void pointer_table_free_entries(allocation_meta_data_table_t * table) {
     table->entries = NULL;
 }
 
-int pointer_table_insert_entry(allocation_meta_data_table_entry_t * node, allocation_meta_data_table_t * table) {
+int allocation_meta_data_table_insert_entry(allocation_meta_data_table_entry_t * node,
+                                            allocation_meta_data_table_t * table) {
     if (!node || !table) {
         return -1;
     }
     if (table->used >= ((double)table->allocated) * TABLE_GROWTH_TRIGGER_VALUE) {
-        if (pointer_table_grow_table(table)) {
+        if (allocation_meta_data_table_grow_table(table)) {
             return -1;
         }
     }
@@ -123,7 +116,7 @@ int pointer_table_insert_entry(allocation_meta_data_table_entry_t * node, alloca
     index = fnv1a_hash_data((uint64_t)node->key, POINTER_SIZE);
     for (size_t i = 0; i < table->allocated; i++) {
         try = (i + index) & (table->allocated - 1);
-        if (!table->entries[try] || table->entries[try] == TOMBSTONE) {
+        if (!table->entries[try] || table->entries[try] == TABLE_TOMBSTONE) {
             table->entries[try] = node;
             table->used++;
             return 0;
@@ -132,7 +125,8 @@ int pointer_table_insert_entry(allocation_meta_data_table_entry_t * node, alloca
     return -1;
 }
 
-allocation_meta_data_table_entry_t * pointer_table_remove_entry(void * key, allocation_meta_data_table_t * table) {
+allocation_meta_data_table_entry_t * allocation_meta_data_table_remove_entry(void * key,
+                                                                             allocation_meta_data_table_t * table) {
     if (!table || !key) {
         return NULL;
     }
@@ -143,9 +137,9 @@ allocation_meta_data_table_entry_t * pointer_table_remove_entry(void * key, allo
         if (!table->entries[try]) {
             return 0;
         }
-        if (table->entries[try] != TOMBSTONE && table->entries[try]->key == key) {
+        if (table->entries[try] != TABLE_TOMBSTONE && table->entries[try]->key == key) {
             allocation_meta_data_table_entry_t * tempNode = table->entries[try];
-            table->entries[try] = TOMBSTONE;
+            table->entries[try] = TABLE_TOMBSTONE;
             table->used--;
             return tempNode;
         }
@@ -153,7 +147,8 @@ allocation_meta_data_table_entry_t * pointer_table_remove_entry(void * key, allo
     return NULL;
 }
 
-allocation_meta_data_table_entry_t * pointer_table_look_up_entry(void * key, allocation_meta_data_table_t * table) {
+allocation_meta_data_table_entry_t * allocation_meta_data_table_look_up_entry(void * key,
+                                                                              allocation_meta_data_table_t * table) {
     if (!table) {
         return NULL;
     }
@@ -170,7 +165,7 @@ allocation_meta_data_table_entry_t * pointer_table_look_up_entry(void * key, all
     return NULL;
 }
 
-static int pointer_table_grow_table(allocation_meta_data_table_t * table) {
+static int allocation_meta_data_table_grow_table(allocation_meta_data_table_t * table) {
     allocation_meta_data_table_entry_t ** newEntries =
         CHECKED_MALLOC_USING_TYPE(table->allocated * GROWTH_FACTOR, *table->entries);
     if (!newEntries) {
@@ -182,12 +177,10 @@ static int pointer_table_grow_table(allocation_meta_data_table_t * table) {
     allocation_meta_data_table_entry_t ** oldEntries = table->entries;
     table->entries = newEntries;
     table->used = 0;
-    table->allocated *= GROWTH_FACTOR;
-    for (size_t j = 0; j < table->allocated / GROWTH_FACTOR; j++) {
-        pointer_table_insert_entry(oldEntries[j], table);
+    for (size_t j = 0; j < table->allocated; j++) {
+        allocation_meta_data_table_insert_entry(oldEntries[j], table);
     }
+    table->allocated *= GROWTH_FACTOR;
     untraced_free(oldEntries);
     return 0;
 }
-
-#endif

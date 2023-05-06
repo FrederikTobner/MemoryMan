@@ -1,8 +1,7 @@
-#if defined(MEM_TRACE) && !defined(NDEBUG)
-
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "allocation_meta_data.h"
 #include "allocation_meta_data_table.h"
 #include "memory_tracer.h"
 #include "untraced_allocations.h"
@@ -11,7 +10,7 @@ static allocation_meta_data_table_t * allocationMetaDataTable = NULL;
 
 void memory_tracer_init(void) {
     allocationMetaDataTable = untraced_malloc(sizeof(allocation_meta_data_table_t));
-    pointer_table_init_table(allocationMetaDataTable);
+    allocation_meta_data_table_init(allocationMetaDataTable);
     atexit(memory_tracer_at_exit);
 }
 
@@ -25,27 +24,22 @@ void memory_tracer_at_exit() {
                    allocationMetaDataTable->entries[i]->data->fileName);
         }
     }
-    pointer_table_destory(&allocationMetaDataTable);
+    allocation_meta_data_table_destory(&allocationMetaDataTable);
 }
 
-void memory_tracer_handle_allocation(void * pointer, char const * functionName, size_t lineNumber,
+void memory_tracer_handle_allocation(void * pointer, size_t lineNumber, char const * functionName,
                                      char const * fileName) {
-    allocation_meta_data_t * metaData = untraced_malloc(sizeof(allocation_meta_data_t));
+    allocation_meta_data_t * metaData = allocation_meta_data_new(lineNumber, functionName, fileName);
     if (!metaData) {
         exit(-1);
     }
-    metaData->functionName = functionName;
-    metaData->lineNumber = lineNumber;
-    metaData->fileName = fileName;
-    allocation_meta_data_table_entry_t * entry = pointer_table_entry_new(pointer, metaData);
-    pointer_table_insert_entry(entry, allocationMetaDataTable);
+    allocation_meta_data_table_entry_t * entry = allocation_meta_data_table_entry_new(pointer, metaData);
+    allocation_meta_data_table_insert_entry(entry, allocationMetaDataTable);
 }
 
 void memory_tracer_handle_free(void * pointer) {
 
-    allocation_meta_data_table_entry_t * entry = pointer_table_remove_entry(pointer, allocationMetaDataTable);
-    untraced_free(entry->data);
-    untraced_free(entry);
+    allocation_meta_data_table_entry_t * entry =
+        allocation_meta_data_table_remove_entry(pointer, allocationMetaDataTable);
+    allocation_meta_data_table_entry_destroy(&entry);
 }
-
-#endif

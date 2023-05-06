@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         operatingsystems: [ubuntu-latest, macos-latest] 
-        buildtypes: [Debug]
+        buildtypes: [Release]
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
