@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 // The memory man include need to come after the stdlib include
-#include "memory_man.h"
+#include "memory_tracer.h"
 
 void foo() {
     int * i1 = malloc(sizeof(int));

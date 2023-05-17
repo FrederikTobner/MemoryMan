@@ -3,7 +3,7 @@
 #include <stdint.h>
 
 #include "allocation_meta_data_table.h"
-#include "memory_tracer.h"
+#include "memory_tracer_internal.h"
 #include "untraced_allocations.h"
 
 void traced_free(void * pointer) {

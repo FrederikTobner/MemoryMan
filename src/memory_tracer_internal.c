@@ -3,7 +3,7 @@
 
 #include "allocation_meta_data.h"
 #include "allocation_meta_data_table.h"
-#include "memory_tracer.h"
+#include "memory_tracer_internal.h"
 #include "untraced_allocations.h"
 
 static allocation_meta_data_table_t * allocationMetaDataTable = NULL;
